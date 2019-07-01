@@ -27,24 +27,24 @@ function getPrivateKeys(username, password, roles = ['owner', 'active', 'posting
 function suggestPassword() {
   const array = new Uint32Array(10);
   window.crypto.getRandomValues(array);
-  return 'P'+dsteem.PrivateKey.fromSeed(array).toString();
+  return 'P' + dsteem.PrivateKey.fromSeed(array).toString();
 }
 
-$(document).ready(async function() {
+$(document).ready(async function () {
 
   // Checks and shows an account's RC
-  $('#username').keyup(async function() {
+  $('#username').keyup(async function () {
     const parent = $(this).parent('.form-group');
     const ac = await getRC($(this).val());
 
     if (ac.rc_accounts.length > 0) {
       parent.find('.text-muted').remove();
-      parent.append('<div class="text-muted">Current RC: '+ Number(ac.rc_accounts[0].rc_manabar.current_mana).toLocaleString() +'</div>');
+      parent.append('<div class="text-muted">Current RC: ' + Number(ac.rc_accounts[0].rc_manabar.current_mana).toLocaleString() + '</div>');
     }
   });
 
   // Check if the name is available
-  $('#new-account').keyup(async function() {
+  $('#new-account').keyup(async function () {
     const ac = await checkAccountName($(this).val());
 
     (ac) ? $(this).removeClass('is-invalid').addClass('is-valid') : $(this).removeClass('is-valid').addClass('is-invalid');
@@ -54,7 +54,7 @@ $(document).ready(async function() {
   $('#password').val(suggestPassword());
 
   // Processisng claim account form
-  $('#claim-account').submit(async function(e) {
+  $('#claim-account').submit(async function (e) {
     e.preventDefault();
 
     const username = $('#username').val();
@@ -69,20 +69,29 @@ $(document).ready(async function() {
 
     feedback.removeClass('alert-success').removeClass('alert-danger');
 
-    client.broadcast.sendOperations([op], dsteem.PrivateKey.from(activeKey))
-      .then((r) => {
-        console.log(r);
-        feedback.addClass('alert-success').text('You have successfully claimed a discounted account!');
-      })
-      .catch(e => {
-        console.log(e);
-        feedback.addClass('alert-danger').text(e.message);
+    if (window.steem_keychain && activeKey === '') {
+      op[1].fee = op[1].fee.toString();
+      steem_keychain.requestBroadcast(username, [op], 'active', function (response) {
+        console.log(response);
+        if (response.success) feedback.addClass('alert-success').text('You have successfully claimed a discounted account!');
       });
+
+    } else {
+      client.broadcast.sendOperations([op], dsteem.PrivateKey.from(activeKey))
+        .then((r) => {
+          console.log(r);
+          feedback.addClass('alert-success').text('You have successfully claimed a discounted account!');
+        })
+        .catch(e => {
+          console.log(e);
+          feedback.addClass('alert-danger').text(e.message);
+        });
+    }
   });
 
 
   // Processing create account form
-  $('#create-account').submit(async function(e) {
+  $('#create-account').submit(async function (e) {
     e.preventDefault();
 
     const username = $('#new-account').val();
@@ -120,9 +129,9 @@ $(document).ready(async function() {
       const delegate_op = [
         'delegate_vesting_shares',
         {
-            delegatee: username,
-            delegator: creator,
-            vesting_shares: delegation,
+          delegatee: username,
+          delegator: creator,
+          vesting_shares: delegation,
         }
       ];
       ops.push(delegate_op);
@@ -130,14 +139,22 @@ $(document).ready(async function() {
 
     feedback.removeClass('alert-success').removeClass('alert-danger');
 
-    client.broadcast.sendOperations(ops, dsteem.PrivateKey.from(active))
-      .then((r) => {
-        console.log(r);
-        feedback.addClass('alert-success').text('Account: '+ username +' has been created successfully.');
-      })
-      .catch(e => {
-        console.log(e);
-        feedback.addClass('alert-danger').text(e.message);
+    if (window.steem_keychain && active === '') {
+      steem_keychain.requestBroadcast(creator, ops, 'active', function (response) {
+        console.log(response);
+        if (response.success) feedback.addClass('alert-success').text('Account: ' + username + ' has been created successfully.');
       });
+
+    } else {
+      client.broadcast.sendOperations(ops, dsteem.PrivateKey.from(active))
+        .then((r) => {
+          console.log(r);
+          feedback.addClass('alert-success').text('Account: ' + username + ' has been created successfully.');
+        })
+        .catch(e => {
+          console.log(e);
+          feedback.addClass('alert-danger').text(e.message);
+        });
+    }
   });
 });
