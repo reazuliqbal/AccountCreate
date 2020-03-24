@@ -119,6 +119,8 @@ $(document).ready(async function () {
         alert('STEEM and/or HIVE Keychain was not found.');
       }
     } else {
+      const client = (chain === 'hive') ? hiveClient : steemClient;
+
       client.broadcast.sendOperations([op], dsteem.PrivateKey.from(activeKey))
         .then((r) => {
           console.log(r);
@@ -204,6 +206,8 @@ $(document).ready(async function () {
         alert('STEEM and/or HIVE Keychain was not found.');
       }
     } else {
+      const client = (chain === 'hive') ? hiveClient : steemClient;
+
       client.broadcast.sendOperations(ops, dsteem.PrivateKey.from(active))
         .then((r) => {
           console.log(r);
