@@ -1,4 +1,4 @@
-const hiveClient = new dsteem.Client('https://api.hive.blog');
+const hiveClient = new dhive.Client('https://api.hive.blog');
 const steemClient = new dsteem.Client('https://api.steemit.com');
 
 // Checking if the already exists
@@ -157,27 +157,30 @@ $(document).ready(async function () {
       return alert('Username, Password, Creator account is required.')
     }
 
+    const client = (chain === 'hive') ? hiveClient : steemClient;
+    const lib = (chain === 'hive') ? dhive : dsteem;
+
     const ops = [];
 
     const keys = getPrivateKeys(username, password);
 
     const create_op = ['create_claimed_account', {
-      active: dsteem.Authority.from(keys.activePubkey),
+      active: lib.Authority.from(keys.activePubkey),
       creator,
       extensions: [],
       json_metadata: '',
       memo_key: keys.memoPubkey,
       new_account_name: username,
-      owner: dsteem.Authority.from(keys.ownerPubkey),
-      posting: dsteem.Authority.from(keys.postingPubkey),
+      owner: lib.Authority.from(keys.ownerPubkey),
+      posting: lib.Authority.from(keys.postingPubkey),
     }];
 
     ops.push(create_op);
 
     if (sp > 0) {
       // Converting SP to VESTS
-      const delegation = (dsteem.getVestingSharePrice(await client.database.getDynamicGlobalProperties()))
-        .convert({ amount: sp, symbol: 'STEEM' });
+      const delegation = (lib.getVestingSharePrice(await client.database.getDynamicGlobalProperties()))
+        .convert({ amount: sp, symbol: (chain === 'hive') ? 'HIVE' : 'STEEM' });
 
       const delegate_op = ['delegate_vesting_shares', {
         delegatee: username,
@@ -206,9 +209,7 @@ $(document).ready(async function () {
         alert('STEEM and/or HIVE Keychain was not found.');
       }
     } else {
-      const client = (chain === 'hive') ? hiveClient : steemClient;
-
-      client.broadcast.sendOperations(ops, dsteem.PrivateKey.from(active))
+      client.broadcast.sendOperations(ops, lib.PrivateKey.from(active))
         .then((r) => {
           console.log(r);
           feedbackDiv.addClass('alert-success').text('Account: ' + username + ' has been created successfully.');
