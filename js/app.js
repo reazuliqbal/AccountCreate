@@ -96,9 +96,11 @@ $(document).ready(async function () {
 
     feedbackDiv.removeClass('alert-success').removeClass('alert-danger').empty();
 
+    const lib = (chain === 'hive') ? dhive : dsteem;
+
     const op = ['claim_account', {
       creator: username,
-      fee: dsteem.Asset.from('0.000 STEEM'),
+      fee: lib.Asset.from(`0.000 ${(chain === 'hive') ? 'HIVE' : 'STEEM'}`),
       extensions: [],
     }];
 
@@ -121,7 +123,7 @@ $(document).ready(async function () {
     } else {
       const client = (chain === 'hive') ? hiveClient : steemClient;
 
-      client.broadcast.sendOperations([op], dsteem.PrivateKey.from(activeKey))
+      client.broadcast.sendOperations([op], lib.PrivateKey.from(activeKey))
         .then((r) => {
           console.log(r);
           feedbackDiv.addClass('alert-success').text('You have successfully claimed a discounted account!');
