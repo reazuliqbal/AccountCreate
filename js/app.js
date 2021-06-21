@@ -1,4 +1,4 @@
-const hiveClient = new dhive.Client('https://api.hive.blog');
+const hiveClient = new dhive.Client(['https://api.hive.blog', 'https://api.ha.deathwing.me']);
 const steemClient = new dsteem.Client('https://api.steemit.com');
 
 // Checking if the already exists
